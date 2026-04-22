@@ -83,7 +83,7 @@ jobs:
             # continue-on-error: true (so pipeline keeps running BUT IT IS NOT A BEST PRACTICE — ideally we would fail here and fix SAST issues before moving on to later gates)
             # Q: where do findings show up? (NOT GitHub Security tab — why?)
             - name: SonarQube Scan
-              uses: SonarSource/sonarqube-scan-action@v3
+              uses: SonarSource/sonarqube-scan-action@v7.1.0
               continue-on-error: true
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -200,6 +200,8 @@ jobs:
 
             # TODO#16: build the Docker image tagged `my-app:latest`
             #          Hint: `docker build -t ...`
+            - name: Build Docker image
+              run: docker build -t my-app:latest .
 
             - name: Trivy Scan
               uses: aquasecurity/trivy-action@master
@@ -216,14 +218,20 @@ jobs:
 
             # TODO#20: upload Trivy SARIF to Security tab
             # Action: github/codeql-action/upload-sarif@v3, category: trivy
-
-            # TODO#21: upload trivy-results.sarif as workflow artifact
-            - name: Upload Trivy SARIF
+            - name: Upload Trivy SARIF to Security tab
               if: always()
               uses: github/codeql-action/upload-sarif@v3 # TODO#20
               with:
                 sarif_file: 'trivy-results.sarif'
                 category: trivy
+
+            # TODO#21: upload trivy-results.sarif as workflow artifact
+            - name: Upload Trivy Scan Artifact
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: trivy-results
+                path: trivy-results.sarif
 
     # GATE#4: IaC scanning (Since there is no infrastructure cod here and it is out of scope for this class so we could skip it HELL YEAH!)
     # GATE#5: DAST (We have OWASP ZAP workshop here so we can skip this one too! YOHOOO!)
